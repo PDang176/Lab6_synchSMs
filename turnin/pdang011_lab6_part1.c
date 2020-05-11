@@ -60,7 +60,6 @@ int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRB = 0xFF; PORTB = 0x00;
     /* Insert your solution below */
-    while (1) {
 	state = Start;
 	TimerSet(1000);
 	TimerOn();
@@ -71,6 +70,5 @@ int main(void) {
 		TimerFlag = 0;
 	}
 
-    }
     return 1;
 }
