@@ -26,32 +26,40 @@
 echo ======================================================\n
 echo Running all tests..."\n\n
 
-test "state: Start => PORTB: 0x07, state: Wait_Press"
+test "state: Start => PORTB: 0x01"
+set state = Start
+continue 5
+expectPORTB 0x01
+expect state LED_0
+checkResult
+
+test "state: Start, Wait 1 sec => PORTB: 0x02"
 set state = Start
 timeContinue
-expectPORTB 0x07
-expect state Wait_Press
+expectPORTB 0x02
+expect state LED_1
 checkResult
 
-test "PINA: 0xFE => PORTB: 0x08, state: Increment"
-setPINA 0xFE
-timeContinue
-expectPORTB 0x08
-expect state Increment
+test "state: Start, Wait 2 sec => PORTB: 0x04"
+set state = Start
+timeContinue 2
+expectPORTB 0x04
+expect state LED_2
 checkResult
 
-test "PINA: 0xFD => PORTB: 0x07, state: Decrement"
-setPINA 0xFD
-timeContinue
-expectPORTB 0x07
-expect state Decrement
+test "state: Start, Wait 3 sec => PORTB: 0x02"
+set state = Start
+timeContinue 3
+expectPORTB 0x01
+expect state LED_0
 checkResult
 
-test "PINA: 0xFC => PORTB: 0x00, state: Reset"
-setPINA 0xFC
-timeContinue
-expectPORTB 0x00
-expect state Reset
+test "state: Start, Wait 3 sec, PINA: 0x00 => PORTB: 0x02"
+set state = Start
+timeContinue 3
+setPINA 0x00
+expectPORTB 0x02
+expect state Pause_Wait
 checkResult
 
 # Report on how many tests passed/tests ran

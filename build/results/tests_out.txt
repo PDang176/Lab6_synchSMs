@@ -1,0 +1,8 @@
+Breakpoint 1 at 0x30a: file source/main.c, line 77.
+Note: automatically using hardware breakpoints for read-only addresses.
+======================================================
+Running all tests..."
+
+"state: Start => PORTB: 0x01"...Error detected on fd 6
+test/tests.gdb:31: Error in sourced command file:
+Remote communication error.  Target disconnected.: Interrupted system call.

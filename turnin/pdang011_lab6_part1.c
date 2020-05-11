@@ -1,13 +1,13 @@
 /*	Author: Patrick Dang
  * 	Partner(s) Name: 
  *	Lab Section: 028
- *	Assignment: Lab #6  Exercise #2
+ *	Assignment: Lab #6  Exercise #1
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
  *
- * 	Video Link: https://drive.google.com/file/d/16XvoyGTKD0i1WleeKZji8uEtYGJhBhLa/view?usp=sharing 
+ *	Video Link: https://drive.google.com/file/d/16CqQcqn47kuLGRk8j-TVnfZtleIDLDai/view?usp=sharing 
  */
 #include <avr/io.h>
 #include "timer.h"
@@ -15,37 +15,25 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{Start, Wait_Press, Increment, Decrement, Reset} state;
-
-unsigned char LED;
+enum States{Start, LED_0, LED_1, LED_2} state;
 
 void Tick(){
 	//Transitions
 	switch(state){
 		case Start:
-			state = Wait_Press;
-			LED = 0x07;
-			PORTB = LED;
+			state = LED_0;
 			break;
-		case Wait_Press:
-		case Increment:
-		case Decrement:
-		case Reset:
-			if((~PINA & 0x01) && (~PINA & 0x02)){
-				state = Reset;
-			}
-			else if(~PINA & 0x01){
-				state = Increment;
-			}
-			else if (~PINA & 0x02){
-				state = Decrement;
-			}
-			else{
-				state = Wait_Press;
-			}
+		case LED_0:
+			state = LED_1;
+			break;
+		case LED_1:
+			state = LED_2;
+			break;
+		case LED_2:
+			state = LED_0;
 			break;
 		default:
-			state = Start;
+			state = LED_0;
 			break;
 	}
 
@@ -53,31 +41,28 @@ void Tick(){
 	switch(state){
 		case Start:
 			break;
-		case Wait_Press:
+		case LED_0:
+			PORTB = 0x01;
 			break;
-		case Increment:
-		       	PORTB = (LED < 0x09) ? ++LED : LED;
+                case LED_1:
+			PORTB = 0x02;
 			break;
-		case Decrement:
-			PORTB = (LED > 0x00) ? --LED : LED;
+                case LED_2:
+			PORTB = 0x04;
 			break;
-		case Reset:
-			LED = 0x00;
+                default:
 			PORTB = 0x00;
-			break;
-		default:
 			break;
 	}
 }
 
 int main(void) {
     /* Insert DDR and PORT initializations */
-	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
     /* Insert your solution below */
     while (1) {
 	state = Start;
-	TimerSet(100);
+	TimerSet(1000);
 	TimerOn();
 	
 	while(1){
