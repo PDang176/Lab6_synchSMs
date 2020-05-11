@@ -1,13 +1,13 @@
 /*	Author: Patrick Dang
  * 	Partner(s) Name: 
  *	Lab Section: 028
- *	Assignment: Lab #6  Exercise #2
+ *	Assignment: Lab #6  Exercise #3
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
  *
- * 	Video Link: https://drive.google.com/file/d/16XvoyGTKD0i1WleeKZji8uEtYGJhBhLa/view?usp=sharing 
+ * 	Video Link: https://drive.google.com/file/d/16dZUXJ4EliRe5SNVSK2yusEQu1kBQV9K/view?usp=sharing
  */
 #include <avr/io.h>
 #include "timer.h"
@@ -15,45 +15,83 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{Start, LED_0, LED_1, LED_2, Pause_Wait, Pause_Released} state;
+enum States{Start, Wait_Press, Increment, Decrement, Reset} state;
 
-unsigned char next;
-unsigned char released;
+unsigned char LED;
+unsigned int i;
 
 void Tick(){
 	//Transitions
 	switch(state){
 		case Start:
-			state = LED_0;
+			state = Wait_Press;
+			LED = 0x07;
+			PORTB = LED;
 			break;
-		case LED_0:
-			state = ((~PINA & 0x01) && released) ? Pause_Wait : LED_1;
-			next = LED_2;
-			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
-			break;
-		case LED_1:
-			state = ((~PINA & 0x01) && released) ? Pause_Wait : next;
-			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
-			break;
-		case LED_2:
-			state = ((~PINA & 0x01) && released) ? Pause_Wait : LED_1;
-			next = LED_0;
-			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
-			break;
-		case Pause_Wait:
-			state = ((~PINA & 0x01) && released) ? Pause_Wait : Pause_Released;
-			break;
-		case Pause_Released:
-			if(~PINA & 0x01){
-				state = Start;
-				released = 0x00;
+		case Wait_Press:
+			if((~PINA & 0x01) && (~PINA & 0x02)){
+                                state = Reset;
+                        }
+                        else if(~PINA & 0x01){
+                                state = Increment;
+				i = 0;
+                        }
+                        else if (~PINA & 0x02){
+                                state = Decrement;
+				i = 0;
+                        }
+                        else{
+                                state = Wait_Press;
+                        }
+                        break;
+		case Increment:
+			if((~PINA & 0x01) && (~PINA & 0x02)){
+                                state = Reset;
+                        }
+                        else if(~PINA & 0x01){
+                                state = Increment;
+                        }
+                        else if (~PINA & 0x02){
+                                state = Decrement;
+				i = 0;
+                        }
+                        else{
+                                state = Wait_Press;
+                        }
+                        break;
+		case Decrement:
+			if((~PINA & 0x01) && (~PINA & 0x02)){
+                                state = Reset;
+                        }
+                        else if(~PINA & 0x01){
+                                state = Increment;
+				i = 0;
+                        }
+                        else if (~PINA & 0x02){
+                                state = Decrement;
+                        }
+                        else{
+                                state = Wait_Press;
+                        }
+                        break;
+		case Reset:
+			if((~PINA & 0x01) && (~PINA & 0x02)){
+				state = Reset;
+			}
+			else if(~PINA & 0x01){
+				state = Increment;
+				i = 0;
+			}
+			else if (~PINA & 0x02){
+				state = Decrement;
+				i = 0;
 			}
 			else{
-				state = Pause_Released;
+				state = Wait_Press;
 			}
 			break;
 		default:
-			state = LED_0;
+			state = Start;
 			break;
 	}
 
@@ -61,20 +99,21 @@ void Tick(){
 	switch(state){
 		case Start:
 			break;
-		case LED_0:
-			PORTB = 0x01;
+		case Wait_Press:
 			break;
-                case LED_1:
-			PORTB = 0x02;
+		case Increment:
+		       	PORTB = (LED < 0x09 && i == 0) ? ++LED : LED;
+			i = (i < 10) ? i + 1: 0;
 			break;
-                case LED_2:
-			PORTB = 0x04;
+		case Decrement:
+			PORTB = (LED > 0x00 && i == 0) ? --LED : LED;
+			i = (i < 10) ? i + 1: 0;
 			break;
-		case Pause_Wait:
-		case Pause_Released:
-			break;
-                default:
+		case Reset:
+			LED = 0x00;
 			PORTB = 0x00;
+			break;
+		default:
 			break;
 	}
 }
@@ -85,8 +124,7 @@ int main(void) {
 	DDRB = 0xFF; PORTB = 0x00;
     /* Insert your solution below */
 	state = Start;
-	released = 0x01;
-	TimerSet(300);
+	TimerSet(100);
 	TimerOn();
 	
 	while(1){
