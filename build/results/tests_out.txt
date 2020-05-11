@@ -1,7 +1,23 @@
-Breakpoint 1 at 0x2e4: file source/main.c, line 82.
+Breakpoint 1 at 0x3ba: file source/main.c, line 92.
 Note: automatically using hardware breakpoints for read-only addresses.
 ======================================================
 Running all tests..."
 
-"state: Start => PORTB: 0x07, state: Wait_Press"..."PINA: 0xFE => PORTB: 0x08, state: Increment"..."PINA: 0xFD => PORTB: 0x07, state: Decrement"..."PINA: 0xFC => PORTB: 0x00, state: Reset"...======================================================
+"state: Start => PORTB: 0x01"..."state: Start, Wait 1 sec => PORTB: 0x02"...
+	Expected 0x02 
+	PORTB '0x800025:	0x01
+
+	Expected LED_1 but got state:1"state: Start, Wait 2 sec => PORTB: 0x04"...
+	Expected 0x04 
+	PORTB '0x800025:	0x02
+
+	Expected LED_2 but got state:2"state: Start, Wait 3 sec => PORTB: 0x02"...
+	Expected 0x01 
+	PORTB '0x800025:	0x04
+
+	Expected LED_0 but got state:3"state: Start, Wait 3 sec, PINA: 0x00 => PORTB: 0x02"...
+	Expected 0x02 
+	PORTB '0x800025:	0x04
+
+	Expected Pause_Wait but got state:3======================================================
 Remote doesn't know how to detach

@@ -15,37 +15,45 @@
 #include "simAVRHeader.h"
 #endif
 
-enum States{Start, Wait_Press, Increment, Decrement, Reset} state;
+enum States{Start, LED_0, LED_1, LED_2, Pause_Wait, Pause_Released} state;
 
-unsigned char LED;
+unsigned char next;
+unsigned char released;
 
 void Tick(){
 	//Transitions
 	switch(state){
 		case Start:
-			state = Wait_Press;
-			LED = 0x07;
-			PORTB = LED;
+			state = LED_0;
 			break;
-		case Wait_Press:
-		case Increment:
-		case Decrement:
-		case Reset:
-			if((~PINA & 0x01) && (~PINA & 0x02)){
-				state = Reset;
-			}
-			else if(~PINA & 0x01){
-				state = Increment;
-			}
-			else if (~PINA & 0x02){
-				state = Decrement;
+		case LED_0:
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : LED_1;
+			next = LED_2;
+			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
+			break;
+		case LED_1:
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : next;
+			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
+			break;
+		case LED_2:
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : LED_1;
+			next = LED_0;
+			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
+			break;
+		case Pause_Wait:
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : Pause_Released;
+			break;
+		case Pause_Released:
+			if(~PINA & 0x01){
+				state = Start;
+				released = 0x00;
 			}
 			else{
-				state = Wait_Press;
+				state = Pause_Released;
 			}
 			break;
 		default:
-			state = Start;
+			state = LED_0;
 			break;
 	}
 
@@ -53,19 +61,20 @@ void Tick(){
 	switch(state){
 		case Start:
 			break;
-		case Wait_Press:
+		case LED_0:
+			PORTB = 0x01;
 			break;
-		case Increment:
-		       	PORTB = (LED < 0x09) ? ++LED : LED;
+                case LED_1:
+			PORTB = 0x02;
 			break;
-		case Decrement:
-			PORTB = (LED > 0x00) ? --LED : LED;
+                case LED_2:
+			PORTB = 0x04;
 			break;
-		case Reset:
-			LED = 0x00;
+		case Pause_Wait:
+		case Pause_Released:
+			break;
+                default:
 			PORTB = 0x00;
-			break;
-		default:
 			break;
 	}
 }
@@ -76,7 +85,8 @@ int main(void) {
 	DDRB = 0xFF; PORTB = 0x00;
     /* Insert your solution below */
 	state = Start;
-	TimerSet(100);
+	released = 0x01;
+	TimerSet(300);
 	TimerOn();
 	
 	while(1){

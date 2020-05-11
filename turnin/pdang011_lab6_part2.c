@@ -18,6 +18,7 @@
 enum States{Start, LED_0, LED_1, LED_2, Pause_Wait, Pause_Released} state;
 
 unsigned char next;
+unsigned char released;
 
 void Tick(){
 	//Transitions
@@ -26,21 +27,30 @@ void Tick(){
 			state = LED_0;
 			break;
 		case LED_0:
-			state = (~PINA & 0x01) ? Pause_Wait : LED_1;
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : LED_1;
 			next = LED_2;
+			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
 			break;
 		case LED_1:
-			state = (~PINA & 0x01) ? Pause_Wait : next;
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : next;
+			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
 			break;
 		case LED_2:
-			state = (~PINA & 0x01) ? Pause_Wait : LED_1;
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : LED_1;
 			next = LED_0;
+			released = ((~PINA & 0x01) && (~released & 0x01)) ? 0x00 : 0x01;
 			break;
 		case Pause_Wait:
-			state = (~PINA & 0x01) ? Pause_Wait : Pause_Released;
+			state = ((~PINA & 0x01) && released) ? Pause_Wait : Pause_Released;
 			break;
 		case Pause_Released:
-			state = (~PINA & 0x01) ? Start : Pause_Released;
+			if(~PINA & 0x01){
+				state = Start;
+				released = 0x00;
+			}
+			else{
+				state = Pause_Released;
+			}
 			break;
 		default:
 			state = LED_0;
@@ -75,6 +85,7 @@ int main(void) {
 	DDRB = 0xFF; PORTB = 0x00;
     /* Insert your solution below */
 	state = Start;
+	released = 0x01;
 	TimerSet(300);
 	TimerOn();
 	
